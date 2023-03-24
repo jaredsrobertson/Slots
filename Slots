@@ -1,0 +1,389 @@
+import random, time, os, sys
+
+MAX_LINES = 3
+MAX_BET = 1000000
+MIN_BET = 1
+
+ROWS = 3
+COLS = 3
+
+symbol_count = {
+  "A": 3,
+  "B": 4,
+  "C": 5,
+  "D": 6
+}
+
+symbol_value = {
+  "A": 5,
+  "B": 4,
+  "C": 3,
+  "D": 2
+}
+
+def check_winnings(columns, lines, bet, values):
+  winnings = 0
+  winning_lines = []
+  for line in range(lines):
+    symbol = columns[0][line]
+    for column in columns:
+      symbol_to_check = column[line]
+      if symbol != symbol_to_check:
+        break
+    else:
+      winnings += values[symbol] * bet
+      winning_lines.append(line + 1)
+
+  return winnings, winning_lines
+  
+
+def get_slot_machine_spin(rows, cols, symbols):
+  all_symbols = []
+  for symbol, symbol_count in symbols.items():
+    for _ in range(symbol_count):
+      all_symbols.append(symbol)
+
+  columns = []
+  for _ in range(cols):
+    column = []
+    current_symbols = all_symbols[:]
+    for _ in range(rows):
+      value = random.choice(current_symbols)
+      current_symbols.remove(value)
+      column.append(value)
+
+    columns.append(column)  
+
+  return columns
+
+def print_slot_machine(columns):
+  for row in range(len(columns[0])):
+    for i, column in enumerate(columns):
+      if i != len(columns) - 1:
+        print(column[row], end =  " | ")
+      else:
+        print(column[row], end = "")
+
+    print()
+    
+
+def deposit():
+  while True:
+    amount = input("\n\033[3;36mHow much money ya got?\033[0;39m $")
+    sys.stdout.write("\033[F\033[K\033[1G\033[F")
+    if amount.isdigit():
+      amount = int(amount)
+      if 0 < amount <= 250:
+        print("\n\033[3;36mGreaaat, a high-roller, heh. Just so y'know, we don't offer credit...\033[0;39m")
+        break
+      elif 250 < amount <= 1000:
+        print("\n\033[3;36mI reckon that ought to be enough to get you started...\033[0;39m")
+        break
+      elif 1000 < amount <= 20000:
+        print("\n\033[3;36mThat's what I'm talkin' about!\033[0;39m")
+        break
+      elif 20000 < amount <= 1000000:
+        print("\n\033[3;36mA high-roller! Let me grab you a drink! On the house!\033[0;39m")
+        break
+      elif amount > 1000000:
+        print("\n\033[3;36mHmmm, this cash ain't, uh, counterfeit is it? Why don't we start with a smaller amount, heh...\033[0;39m")
+      else:
+        print("\n\033[3;36mGame ain't free, pal!\033[0;39m")
+    else:
+      print("\n\033[3;36mThe hell you talkin' about? You got any money or what?\033[0;39m")
+
+  return amount
+
+def get_number_of_lines():
+  while True:
+    lines = input(f"How many lines would you like to bet? 1, 2 or {str(MAX_LINES)}? ")
+    if lines.isdigit():
+      lines = int(lines)
+      if 1 <= lines <= MAX_LINES:
+        break
+      else:
+        print("You can bet on 1, 2, or 3 lines...")
+    else:
+      print("Please enter the number of lines you would like to bet on, 1, 2, or 3...")
+
+  return lines
+
+def get_bet():
+  while True:
+    amount = input("How much would you like to bet on each line? $")
+    if amount.isdigit():
+      amount = int(amount)
+      if MIN_BET <= amount <= MAX_BET:
+        break
+      else:
+        print(f"Amount must be between ${MIN_BET} and ${MAX_BET} ")
+    else:
+      print("Please enter a bet amount...")
+
+  return amount
+  
+def spin(balance):
+  lines = get_number_of_lines()
+  while True:
+    bet = get_bet()
+    total_bet = bet * lines
+
+    if total_bet > balance:
+      print(f"You're short funds for that bet. Your current balance is ${balance}.")
+    else:
+      break
+
+  print(f"You are betting ${bet} on {lines} lines for a total bet of ${total_bet}.")
+
+  slots =get_slot_machine_spin(ROWS, COLS, symbol_count)
+  print_slot_machine(slots)
+  winnings, winning_lines = check_winnings(slots, lines, bet, symbol_value)
+  print(f"You won ${winnings}!")
+  print("You won on lines:", *winning_lines)
+  return winnings - total_bet
+
+def main():
+  balance = deposit()
+  while True:
+    print(f"\n\033[3;36mSo you gots\033[0;39m ${balance}")
+    answer = input("\n\033[3;36mDo you wanna (p)lay or (q)uit?\033[0;39m ")
+    sys.stdout.write("\033[F\033[K\033[1G\033[F")
+    if answer  == "q" or answer == "Q":
+      break
+    elif answer == "p" or answer == "P":
+      print("\n\033[3;36mWoohoo!\033[0;39m")
+    else: 
+      print("\n\033[3;36mAre you drunk or somethin'?\033[0;39m")
+      continue
+    
+    balance += spin(balance)
+ 
+  print(f"You left with ${balance}")
+
+logo_counter = 0
+
+def logo():
+  global logo_counter
+  while True:
+    print("""\033[33m
+    /$$    /$$        /$$$$$$  /$$$$$$$$  /$$   
+  /$$$$$$ | $$       /$$__  $$|__  $$__//$$$$$$ 
+ /$$__  $$| $$      | $$  \ $$   | $$  /$$__  $$
+| $$  \__/| $$      | $$  | $$   | $$ | $$  \__/
+|  $$$$$$ | $$      | $$  | $$   | $$ |  $$$$$$ 
+ \____  $$| $$      | $$  | $$   | $$  \____  $$
+ /$$  \ $$| $$$$$$$$|  $$$$$$/   | $$  /$$  \ $$
+|  $$$$$$/|________/ \______/    |__/ |  $$$$$$/
+ \_  $$_/                              \_  $$_/ 
+   \__/                                  \__/ 
+   \033[39m
+    """)
+    logo_counter += 1
+    time.sleep(0.125)
+    if logo_counter < 5:
+      os.system('clear')
+      time.sleep(0.125)
+      continue
+    else:
+      breakimport random, time, os, sys
+
+MAX_LINES = 3
+MAX_BET = 1000000
+MIN_BET = 1
+
+ROWS = 3
+COLS = 3
+
+symbol_count = {
+  "A": 3,
+  "B": 4,
+  "C": 5,
+  "D": 6
+}
+
+symbol_value = {
+  "A": 5,
+  "B": 4,
+  "C": 3,
+  "D": 2
+}
+
+def check_winnings(columns, lines, bet, values):
+  winnings = 0
+  winning_lines = []
+  for line in range(lines):
+    symbol = columns[0][line]
+    for column in columns:
+      symbol_to_check = column[line]
+      if symbol != symbol_to_check:
+        break
+    else:
+      winnings += values[symbol] * bet
+      winning_lines.append(line + 1)
+
+  return winnings, winning_lines
+  
+
+def get_slot_machine_spin(rows, cols, symbols):
+  all_symbols = []
+  for symbol, symbol_count in symbols.items():
+    for _ in range(symbol_count):
+      all_symbols.append(symbol)
+
+  columns = []
+  for _ in range(cols):
+    column = []
+    current_symbols = all_symbols[:]
+    for _ in range(rows):
+      value = random.choice(current_symbols)
+      current_symbols.remove(value)
+      column.append(value)
+
+    columns.append(column)  
+
+  return columns
+
+def print_slot_machine(columns):
+  for row in range(len(columns[0])):
+    for i, column in enumerate(columns):
+      if i != len(columns) - 1:
+        print(column[row], end =  " | ")
+      else:
+        print(column[row], end = "")
+
+    print()
+    
+
+def deposit():
+  while True:
+    amount = input("\n\033[3;36mHow much money ya got?\033[0;39m $")
+    sys.stdout.write("\033[F\033[K\033[1G\033[F")
+    if amount.isdigit():
+      amount = int(amount)
+      if 0 < amount <= 250:
+        print("\n\033[3;36mGreaaat, a high-roller, heh. Just so y'know, we don't offer credit...\033[0;39m")
+        break
+      elif 250 < amount <= 1000:
+        print("\n\033[3;36mI reckon that ought to be enough to get you started...\033[0;39m")
+        break
+      elif 1000 < amount <= 20000:
+        print("\n\033[3;36mThat's what I'm talkin' about!\033[0;39m")
+        break
+      elif 20000 < amount <= 1000000:
+        print("\n\033[3;36mA high-roller! Let me grab you a drink! On the house!\033[0;39m")
+        break
+      elif amount > 1000000:
+        print("\n\033[3;36mHmmm, this cash ain't, uh, counterfeit is it? Why don't we start with a smaller amount, heh...\033[0;39m")
+      else:
+        print("\n\033[3;36mGame ain't free, pal!\033[0;39m")
+    else:
+      print("\n\033[3;36mThe hell you talkin' about? You got any money or what?\033[0;39m")
+
+  return amount
+
+def get_number_of_lines():
+  while True:
+    lines = input(f"How many lines would you like to bet? 1, 2 or {str(MAX_LINES)}? ")
+    if lines.isdigit():
+      lines = int(lines)
+      if 1 <= lines <= MAX_LINES:
+        break
+      else:
+        print("You can bet on 1, 2, or 3 lines...")
+    else:
+      print("Please enter the number of lines you would like to bet on, 1, 2, or 3...")
+
+  return lines
+
+def get_bet():
+  while True:
+    amount = input("How much would you like to bet on each line? $")
+    if amount.isdigit():
+      amount = int(amount)
+      if MIN_BET <= amount <= MAX_BET:
+        break
+      else:
+        print(f"Amount must be between ${MIN_BET} and ${MAX_BET} ")
+    else:
+      print("Please enter a bet amount...")
+
+  return amount
+  
+def spin(balance):
+  lines = get_number_of_lines()
+  while True:
+    bet = get_bet()
+    total_bet = bet * lines
+
+    if total_bet > balance:
+      print(f"You're short funds for that bet. Your current balance is ${balance}.")
+    else:
+      break
+
+  print(f"You are betting ${bet} on {lines} lines for a total bet of ${total_bet}.")
+
+  slots =get_slot_machine_spin(ROWS, COLS, symbol_count)
+  print_slot_machine(slots)
+  winnings, winning_lines = check_winnings(slots, lines, bet, symbol_value)
+  print(f"You won ${winnings}!")
+  print("You won on lines:", *winning_lines)
+  return winnings - total_bet
+
+def main():
+  balance = deposit()
+  while True:
+    print(f"\n\033[3;36mSo you gots\033[0;39m ${balance}")
+    answer = input("\n\033[3;36mDo you wanna (p)lay or (q)uit?\033[0;39m ")
+    sys.stdout.write("\033[F\033[K\033[1G\033[F")
+    if answer  == "q" or answer == "Q":
+      break
+    elif answer == "p" or answer == "P":
+      print("\n\033[3;36mWoohoo!\033[0;39m")
+    else: 
+      print("\n\033[3;36mAre you drunk or somethin'?\033[0;39m")
+      continue
+    
+    balance += spin(balance)
+ 
+  print(f"You left with ${balance}")
+
+logo_counter = 0
+
+def logo():
+  global logo_counter
+  while True:
+    print("""\033[33m
+    /$$    /$$        /$$$$$$  /$$$$$$$$  /$$   
+  /$$$$$$ | $$       /$$__  $$|__  $$__//$$$$$$ 
+ /$$__  $$| $$      | $$  \ $$   | $$  /$$__  $$
+| $$  \__/| $$      | $$  | $$   | $$ | $$  \__/
+|  $$$$$$ | $$      | $$  | $$   | $$ |  $$$$$$ 
+ \____  $$| $$      | $$  | $$   | $$  \____  $$
+ /$$  \ $$| $$$$$$$$|  $$$$$$/   | $$  /$$  \ $$
+|  $$$$$$/|________/ \______/    |__/ |  $$$$$$/
+ \_  $$_/                              \_  $$_/ 
+   \__/                                  \__/ 
+   \033[39m
+    """)
+    logo_counter += 1
+    time.sleep(0.125)
+    if logo_counter < 5:
+      os.system('clear')
+      time.sleep(0.125)
+      continue
+    else:
+      break
+
+logo()
+
+print("\033[3mWelcome to SLOTS, a really bad slot machine simulator!\n\033[0m")
+time.sleep(2)
+
+main()
+
+logo()
+
+print("\033[3mWelcome to SLOTS, a really bad slot machine simulator!\n\033[0m")
+time.sleep(2)
+
+main()
